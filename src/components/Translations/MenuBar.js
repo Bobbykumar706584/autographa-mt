@@ -1,35 +1,62 @@
 import React, { Component } from "react";
-import {
-	FormControl,
-	Grid,
-	MenuItem,
-	Select,
-	InputLabel,
-} from "@material-ui/core";
+import { DialogTitle, Grid, MenuItem } from "@material-ui/core";
+import { Button, Checkbox } from "@material-ui/core";
+import Dialog from "@material-ui/core/Dialog";
+import DialogContent from "@material-ui/core/DialogContent";
+import DialogActions from "@material-ui/core/DialogActions";
 import { withStyles } from "@material-ui/core/styles";
+import FormControlLabel from "@material-ui/core/FormControlLabel";
+import Chip from "@material-ui/core/Chip";
 import { connect } from "react-redux";
 import compose from "recompose/compose";
 import { withRouter } from "react-router-dom";
 import { books } from "../Common/BibleOldNewTestment";
 
 const styles = (theme) => ({
-	selectionGrid: {
-		marginLeft: "4%",
+	bookBtn: {
+		marginTop: "15px",
+		marginLeft: "15px",
 	},
-	formControl: {
-		minWidth: 120,
+	uploadChip: {
+		marginTop: "10px",
 	},
-	selectMenu: {
-		width: "140px",
-		padding: "2px",
-		border: "1px solid black",
+	roundedBtn: {
+		border: "1px solid #8c8c8c",
+		margin: 2,
+		paddingLeft: 6,
 		borderRadius: "10px",
+	},
+	boxTitle: {
+		textAlign: "center",
+		background: "#eee",
+	},
+	title: {
+		fontSize: 24,
+		fontWeight: "bold",
+	},
+	chipContainer: {
+		overflow: "auto",
+		maxHeight: "78px",
+		paddingTop: 5,
+	},
+	chip: {
+		margin: 2,
 	},
 });
 
 class MenuBar extends Component {
 	state = {
 		selectbook: "",
+		open: false,
+		checkedItems: new Map(),
+	};
+
+	handleChange = (e) => {
+		const item = e.target.value;
+		const isChecked = e.target.checked;
+		this.setState((prevState) => ({
+			checkedItems: prevState.checkedItems.set(item, isChecked),
+		}));
 	};
 
 	// sort the books in bible order
@@ -51,14 +78,26 @@ class MenuBar extends Component {
 			});
 			return assignedBooks.map((item) => {
 				//map function for displaying books on UI
+				console.log(this.state.checkedItems);
 				return (
-					<MenuItem
+					<Grid
+						item
+						xs={2}
 						key={item}
-						value={item}
-						style={{ fontSize: "80%" }}
+						className={this.props.classes.roundedBtn}
 					>
-						{item.toUpperCase()}
-					</MenuItem>
+						<FormControlLabel
+							control={
+								<Checkbox
+									checked={this.state.checkedItems.get(item)}
+									onChange={this.handleChange}
+									value={item}
+									color="primary"
+								/>
+							}
+							label={item.toUpperCase()}
+						/>
+					</Grid>
 				);
 			});
 		} else {
@@ -77,23 +116,65 @@ class MenuBar extends Component {
 		this.props.updateState(e.target.value);
 	};
 
+	handleOpen = () => {
+		this.setState({ open: true });
+	};
+	handleClose = () => {
+		this.setState({ open: false });
+	};
+
 	render() {
 		const { classes } = this.props;
 		return (
-			<FormControl className={classes.formControl}>
-				<InputLabel id="demo-simple-select-label">
-					Select Book
-				</InputLabel>
-				<Select
-					margin="dense"
-					value={this.state.selectbook}
-					onChange={this.onSelect}
-					labelId="demo-simple-select-label"
-					id="demo-simple-select"
-				>
-					{this.displayBooks()}
-				</Select>
-			</FormControl>
+			<div>
+				<Grid container>
+					<Grid item xs={11} className={classes.chipContainer}>
+						{books.map((item) => (
+							<Chip
+								color="primary"
+								label={item}
+								className={classes.chip}
+							/>
+						))}
+					</Grid>
+					<Grid item xs={1}>
+						<Button
+							className={classes.bookBtn}
+							size="small"
+							variant="contained"
+							color="primary"
+							onClick={this.handleOpen}
+						>
+							Books
+						</Button>
+					</Grid>
+				</Grid>
+
+				{/* open box for books to tokenize */}
+				<Dialog open={this.state.open}>
+					<DialogTitle className={classes.boxTitle}>
+						<span className={classes.title}>Books to Tokenize</span>
+					</DialogTitle>
+
+					<DialogContent>
+						<Grid container justify="center">
+							{this.displayBooks()}
+						</Grid>
+					</DialogContent>
+					<DialogActions>
+						<Button
+							onClick={this.handleClose}
+							variant="contained"
+							color="secondary"
+						>
+							Close
+						</Button>
+						<Button variant="contained" color="primary">
+							Tokenize
+						</Button>
+					</DialogActions>
+				</Dialog>
+			</div>
 		);
 	}
 }
